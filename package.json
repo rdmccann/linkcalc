@@ -1,0 +1,16 @@
+{
+  "name": "untitled1",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.0.14",
+    "bootstrap": "^5.3.8",
+    "d3": "^7.9.0"
+  }
+}
