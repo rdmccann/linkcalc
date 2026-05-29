@@ -1,0 +1,69 @@
+:root {
+    font-family: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif";
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #000000;
+    text-align: center;
+}
+
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 320px;
+    min-height: 100vh;
+    align-items: center;
+}
+
+h1 {
+    font-size: 29px;
+    line-height: 39px;
+    font-weight: 300;
+}
+
+.title {
+    margin-bottom: 40px;
+}
+
+#app {
+    max-width: 1280px;
+}
+
+svg {
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+}
+
+.endPoint {
+    fill: lightsteelblue;
+    stroke: #333;
+    stroke-width: 1.5px;
+    cursor: pointer;
+}
+
+.xPoint {
+    fill: lightslategray;
+    stroke: #333;
+    stroke-width: 1.5px;
+    cursor: pointer;
+}
+
+.endPoint:active {
+    fill: cornflowerblue;
+}
+
+.grabbing {
+    cursor: grabbing !important;
+}
+
+.linkLine {
+    stroke: steelblue;
+    stroke-width: 4px;
+}
+
+.extendedLink {
+    stroke: steelblue;
+    stroke-width: 2px;
+    stroke-dasharray: 7;
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "linkSet": "front",
+    "position": "upper",
+    "data": [
+      {"x": 100, "y": 125},
+      {"x": 250, "y": 200}
+    ]
+  },
+  {
+    "linkSet": "front",
+    "position": "lower",
+    "data": [
+      {"x": 100, "y": 222},
+      {"x": 250, "y": 250}
+    ]
+  }
+]
