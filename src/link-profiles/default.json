@@ -3,16 +3,32 @@
     "linkSet": "front",
     "position": "upper",
     "data": [
-      {"x": 100, "y": 125},
-      {"x": 250, "y": 200}
+      {"x": 50, "y": 145},
+      {"x": 150, "y": 200}
     ]
   },
   {
     "linkSet": "front",
     "position": "lower",
     "data": [
-      {"x": 100, "y": 222},
-      {"x": 250, "y": 250}
+      {"x": 50, "y": 222},
+      {"x": 150, "y": 250}
+    ]
+  },
+  {
+    "linkSet": "rear",
+    "position": "upper",
+    "data": [
+      {"x": 1000, "y": 145},
+      {"x": 900, "y": 180}
+    ]
+  },
+  {
+    "linkSet": "rear",
+    "position": "lower",
+    "data": [
+      {"x": 1000, "y": 222},
+      {"x": 900, "y": 244}
     ]
   }
 ]
