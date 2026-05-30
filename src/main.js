@@ -36,7 +36,7 @@ const svg = d3.create("svg")
 
 // Add the x-axis.
 svg.append("g")
-    .attr("transform", `translate(0,${height - margin.bottom})`)
+    .attr("transform", `translate(0, ${height - margin.bottom})`)
     .classed("axis", true)
     .call(d3.axisBottom(xScale));
 
@@ -50,8 +50,8 @@ svg.append("g")
 
 // line constructor
 const line = d3.line()
-    .x(d => d.x)
-    .y(d => d.y);
+    .x(d => xScale(d.x))
+    .y(d => yScale(d.y));
 
 // extend links
 links.map(link => {
@@ -95,10 +95,8 @@ svg.selectAll(".controlPoint")
     .join(
         enter => enter.append("circle")
             .attr("id", l => l.id)
-            // .attr("cx", d => xScale(d.data[1].x))
-            // .attr("cy", d => yScale(d.data[1].y))
-            .attr("cx", d => d.data[1].x)
-            .attr("cy", d => d.data[1].y)
+            .attr("cx", d => xScale(d.data[1].x))
+            .attr("cy", d => yScale(d.data[1].y))
             .attr("r", 5)
             .classed("controlPoint", true)
             .call(d3.drag().on("drag", draggy)
@@ -116,20 +114,28 @@ svg.selectAll(".controlPoint")
 
 
 // add the svg to the container
-d3.select("#container").append(() => svg.node());
+d3.select("#container").append(() => svg.node())
+    .attr("viewBox", `0 0 ${width} ${height}`)
+    .attr("preserveAspectRatio", "xMidYMid meet")
+    .style("width", "100%")
+    .style("height", "auto");
 
 
 // 4. Drag event function
 function draggy(event) {
     // Update the circle's position
     d3.select(this)
+        // .attr("cx", xScale.invert(event.x))
+        // .attr("cy", yScale.invert(event.y));
         .attr("cx", event.x)
         .attr("cy", event.y);
 
-    // Update link-profiles coordinates to match current mouse/touch position
+    // get the id of the link from the control point
     const id = Number(this.id.replace("controlPoint", ""));
-    links[id].data[1].x = event.x;
-    links[id].data[1].y = event.y;
+
+    // Update link-profiles coordinates to match current mouse/touch position
+    links[id].data[1].x = xScale.invert(event.x);
+    links[id].data[1].y = yScale.invert(event.y);
 
     // re-extend all primary links in same link set
     links.filter(l => !l.ext).forEach(mainLink => {
