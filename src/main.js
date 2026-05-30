@@ -19,8 +19,6 @@ const ymax = links.reduce((max = 0, item) => {
         return dymax > max ? dymax : max
     },  0);
 
-console.log(xmax, ymax)
-
 const xScale = d3.scaleLinear()
     .range([margin.left, width - margin.right]) // pixels
     // .range(d3.extent(links, d => d.data[0].x))
@@ -39,7 +37,6 @@ const svg = d3.create("svg")
 // Add the x-axis.
 svg.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
-    // .style("stroke", "#000")
     .classed("axis", true)
     .call(d3.axisBottom(xScale));
 
@@ -48,6 +45,8 @@ svg.append("g")
     .attr("transform", `translate(${margin.left},0)`)
     .classed("axis", true)
     .call(d3.axisLeft(yScale));
+
+
 
 // line constructor
 const line = d3.line()
@@ -74,37 +73,46 @@ links.map(link => {
     intersectLinks2D(link)
 })
 
+// add link lines
+svg.selectAll(".linkLine")
+    .data(links, l => l.id)
+    .join(
+        enter => enter.append("path")
+            .attr("d", l => line(l.data))
+            .attr("id", link => link.id)
+            .classed("linkLine", true)
+            .classed(link => link.linkSet, true)
+            .classed(link => link.position, true)
+            .classed("extendedLink", link => link.ext),
+        update => update,
+        exit => exit.remove()
+    )
+
 
 // add control points
 svg.selectAll(".controlPoint")
     .data(links)
-    .join("circle")
-    .attr("id", l => l.id)
-    // .attr("cx", d => xScale(d.data[1].x))
-    // .attr("cy", d => yScale(d.data[1].y))
-    .attr("cx", d => d.data[1].x)
-    .attr("cy", d => d.data[1].y)
-    .attr("r", 5)
-    .classed("controlPoint", true)
-    .call(d3.drag().on("drag", draggy)
-        .on("start", event => {
-            d3.select(event.sourceEvent.target).classed("grabbing", true);
-        })
-        .on("drag", draggy)
-        .on("end", event => {
-            d3.select(event.sourceEvent.target).classed("grabbing", false);
-        })
+    .join(
+        enter => enter.append("circle")
+            .attr("id", l => l.id)
+            // .attr("cx", d => xScale(d.data[1].x))
+            // .attr("cy", d => yScale(d.data[1].y))
+            .attr("cx", d => d.data[1].x)
+            .attr("cy", d => d.data[1].y)
+            .attr("r", 5)
+            .classed("controlPoint", true)
+            .call(d3.drag().on("drag", draggy)
+                .on("start", event => {
+                    d3.select(event.sourceEvent.target).classed("grabbing", true);
+                })
+                .on("drag", draggy)
+                .on("end", event => {
+                    d3.select(event.sourceEvent.target).classed("grabbing", false);
+                })
+            ),
+        update => update,
+        exit => exit.remove()
     )
-
-svg.selectAll(".linkLine")
-    .data(links, l => l.id)
-    .join("path")
-    .attr("d", l => line(l.data))
-    .attr("id", link => link.id)
-    .classed("linkLine", true)
-    .classed(link => link.linkSet, true)
-    .classed(link => link.position, true)
-    .classed("extendedLink", link => link.ext)
 
 
 // add the svg to the container
