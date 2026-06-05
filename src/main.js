@@ -145,7 +145,6 @@ linkLines.filter(link => !link.ext)
                 })
                 .on("drag", draggy)
                 .on("start", event => {
-                    console.log("dragging start", event, this)
                     d3.select(event.sourceEvent.target).classed("grabbing", true);
                 })
                 .on("drag", draggy)
