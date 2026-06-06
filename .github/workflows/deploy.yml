@@ -30,6 +30,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: production-files
+          if-no-files-found: 'fail'
           path: dist
 
   deploy:
