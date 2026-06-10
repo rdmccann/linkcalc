@@ -67,7 +67,7 @@ svg.on("mousemove", function(event) {
     mouseX = Math.round(mouseX);
     mouseY = Math.round(mouseY);
 
-    d3.select("#mouse-xy").text(`scaled x:${mouseX} , y:${mouseY} : event x:${event.x} , y:${event.y}`)
+    d3.select("#mouse-xy").text(`x:${mouseX} , y:${mouseY}`)
 })
 
 
@@ -78,7 +78,7 @@ const line = d3.line()
     .y(d => yScale(d.y));
 
 
-// add extended links to links array
+// add extended links to links data array
 links.map(link => {
     links.push({
         linkSet: link.linkSet,
@@ -89,9 +89,30 @@ links.map(link => {
 })
 
 
+// add properties on objects for linkSet and position
+links.map(link => {
+    link.data.map(p => {
+        Object.defineProperties(p,
+            {
+                linkSet: {
+                    get: function () {
+                        return link.linkSet
+                    },
+                    enumerable: false // Hidden from loops/Object.keys()
+                },
+                position: {
+                    get: function () {
+                        return link.position
+                    },
+                    enumerable: false // Hidden from loops/Object.keys()
+                }
+            })
+    })
+})
+
+
 // create link ids
 links.map((link, i) => {
-    // link.id = (link.ext ? "ext" : "link")+i
     link.id = i
 })
 
@@ -100,46 +121,41 @@ links.map(link => {
     intersectLinks2D(link)
 })
 
-// add link lines
-// svg.selectAll(".linkLine")
-//     .data(links, d => d.id)
-//     .join(
-//         enter => enter.append("path")
-//             .attr("d", l => line(l.data))
-//             .attr("id", link => link.id)
-//             .classed("linkLine", true)
-//             .classed(link => link.linkSet, true)
-//             .classed(link => link.position, true)
-//             .classed("extendedLink", link => link.ext),
-//         update => {console.log(update); update;},
-//         exit => exit.remove()
-//     )
 
-// create link line groups
+// append groups for each link line
 const linkLines = svg.selectAll("g.linkLine")
     .data(links)
     .join("g")
     .attr("id", l => l.id)
-    // .attr("class", link => `linkLine ${link.linkSet} ${link.position}`, true)
+    .attr("linkset", p => p.linkSet)
+    .attr("position", p => p.position)
 
 // append link lines
 linkLines.append("path")
     .attr("d", l => line(l.data))
+    .attr("linkset", p => p.linkSet)
+    .attr("position", p => p.position)
     .attr("class", link => `linkLine ${link.linkSet} ${link.position}`, true)
     .classed("extendedLink", link => link.ext)
 
-// add control points
+// add control points to primary linkLines
 linkLines.filter(link => !link.ext)
     .selectAll(".controlPoint")
+    // select the line point data array to add control points for every vertex (usually just start/end)
     .data(l => l.data)
     .join(
+        // add circle control points at each vertex for each mainLink
         enter => enter.append("circle")
             .attr("id", (l,i) => i)
             .attr("cx", p => xScale(p.x))
             .attr("cy", p => yScale(p.y))
             .attr("r", 5)
+            .attr("linkset", p => p.linkSet)
+            .attr("position", p => p.position)
             .classed("controlPoint", true)
+
             .call(d3.drag()
+                // manually set the subject to mouse position
                 .subject(function(event) {
                     return {x: event.x, y: event.y};
                 })
@@ -172,37 +188,77 @@ function draggy(event) {
         .attr("cx", event.x)
         .attr("cy", event.y)
 
-    // Update link-profiles coordinates to match current mouse/touch position
-    links[this.parentNode.id].data[this.id].x = xScale.invert(event.x);
-    links[this.parentNode.id].data[this.id].y = yScale.invert(event.y);
+    // if this is an intersection point
+    if(d3.select(this).classed("intersection")) {
+        console.log("intersection point")
+        links.filter(link => link.ext && link.linkSet === this.id)
+            .map((extLink) => {
+                // move the extended linkLines endpoint to the mouse position
+                extLink.data[1].x = xScale.invert(event.x);
+                extLink.data[1].y = yScale.invert(event.y);
 
-    // links.filter(l => !l.ext).forEach(mainLink =>
-    //     console.log(links.filter(l => l.position === mainLink.position && l.linkSet === mainLink.linkSet && l.ext === true))
-    // )
+                // find the matching main link and find it's starting point
+                links.filter(link => !link.ext && link.position === extLink.position && link.linkSet === extLink.linkSet)
+                    .map((mainLink) => {
 
-    const mainLinks = links.filter(l => !l.ext)
+                        // calculate the link end points (mid-points)
+                        const x1 = mainLink.data[0].x;
+                        const y1 = mainLink.data[0].y;
+                        const x2 = extLink.data[1].x;
+                        const y2 = extLink.data[1].y;
 
-    // re-extend all primary links in same link set
-    mainLinks.forEach(mainLink => {
-        // find matching extended link line and re-extend it
-        links.filter(l => l.ext && l.position === mainLink.position && l.linkSet === mainLink.linkSet)
-            .map(extLink => {
-                extLink.data = extendLink(mainLink);
+                        // Calculate current length (len) and directional vector
+                        const dx = x2 - x1;
+                        const dy = y2 - y1;
+
+                        const len = Math.sqrt(dx**2 + dy**2);
+
+                        const x3 = x1 + dx * (mainLink.length/len)
+                        const y3 = y1 + dy * (mainLink.length/len)
+
+                        // move the main link end point
+                        mainLink.data[1].x = x3;
+                        mainLink.data[1].y = y3;
+                        // move the coincident ext link start point
+                        extLink.data[0].x = x3;
+                        extLink.data[0].y = y3;
+                        // select the corresponding mainLink control point and move it
+                        svg.selectAll(`circle[linkSet='${mainLink.linkSet}'][position='${mainLink.position}']`)
+                            // .filter((p, i) => i === 1)
+                            .attr("cx", p => xScale(p.x))
+                            .attr("cy", p => yScale(p.y))
+                    })
             })
-    })
 
-    // recalculate intersections in link set
-    links.filter(l => l.ext === true)
-        .map(link => {
-            intersectLinks2D(link);
+    } else {
+
+        // Update link-profiles coordinates to match current mouse/touch position
+        links[this.parentNode.id].data[this.id].x = xScale.invert(event.x);
+        links[this.parentNode.id].data[this.id].y = yScale.invert(event.y);
+
+        const mainLinks = links.filter(l => !l.ext)
+
+        // re-extend all primary links in same link set
+        mainLinks.forEach(mainLink => {
+            // find matching extended link line and re-extend it
+            links.filter(l => l.ext && l.position === mainLink.position && l.linkSet === mainLink.linkSet)
+                .map(extLink => {
+                    extLink.data = extendLink(mainLink);
+                })
         })
+
+        // recalculate intersections in link set
+        links.filter(l => l.ext === true)
+            .map(link => {
+                intersectLinks2D(link);
+            })
+    }
 
     // console.log(svg.selectAll(".linkLine"))
 
     // redraw link lines
     svg.selectAll("path.linkLine")
         .data(links, d => d.id)
-        // .attr("d", l => line(l.data))
         .attr("d", l => line(l.data))
 }
 
@@ -217,6 +273,8 @@ function extendLink(inLink) {
     const dy = y2 - y1;
 
     const len = Math.sqrt(dx**2 + dy**2);
+
+    inLink.length = len;
 
     // Define how much longer you want the line to be
     const ext = 1200;
@@ -268,10 +326,33 @@ function intersectLinks2D(linkA) {
                     l.data[1].y = intersectionY;
                 })
 
-            // console.log(d3.selectAll("point", "intersection"))
+            // append intersection points
+            if (svg.selectAll(`.intersection.${linkA.linkSet}`).size() === 0) {
+                svg.append("circle")
+                    // .data({linkA: linkA, linkB: linkB, cx: intersectionX, cy: intersectionY})
+                    .attr("id", linkA.linkSet)
+                    .attr("cx", p => xScale(intersectionX))
+                    .attr("cy", p => yScale(intersectionY))
+                    .attr("length", d)
+                    .attr("r", 5)
+                    .classed(linkA.linkSet, true)
+                    .classed("intersection", true)
+                    .call(d3.drag()
+                        .subject(function (event) {
+                            return {x: event.x, y: event.y};
+                        })
+                        .on("drag", draggy)
+                        .on("start", event => {
+                            d3.select(event.sourceEvent.target).classed("grabbing", true);
+                        })
+                        .on("drag", draggy)
+                        .on("end", event => {
+                            d3.select(event.sourceEvent.target).classed("grabbing", false);
+                        })
+                    )
+            }
         }
     }
 
-        return null;
-    // })
+    return null;
 }

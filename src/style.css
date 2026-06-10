@@ -52,7 +52,7 @@ svg {
     cursor: pointer;
 }
 
-.xPoint {
+.intersection {
     fill: lightslategray;
     stroke: #333;
     stroke-width: 1.5px;
