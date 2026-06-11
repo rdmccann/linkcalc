@@ -89,24 +89,23 @@ links.map(link => {
 })
 
 
-// add properties on objects for linkSet and position
+// add properties on vertex objects for linkSet and position
 links.map(link => {
     link.data.map(p => {
-        Object.defineProperties(p,
-            {
-                linkSet: {
-                    get: function () {
-                        return link.linkSet
-                    },
-                    enumerable: false // Hidden from loops/Object.keys()
+        Object.defineProperties(p, {
+            linkSet: {
+                get: function () {
+                    return link.linkSet
                 },
-                position: {
-                    get: function () {
-                        return link.position
-                    },
-                    enumerable: false // Hidden from loops/Object.keys()
-                }
-            })
+                enumerable: false // Hidden from loops/Object.keys()
+            },
+            position: {
+                get: function () {
+                    return link.position
+                },
+                enumerable: false // Hidden from loops/Object.keys()
+            }
+        })
     })
 })
 
@@ -222,6 +221,7 @@ function draggy(event) {
                         // move the coincident ext link start point
                         extLink.data[0].x = x3;
                         extLink.data[0].y = y3;
+
                         // select the corresponding mainLink control point and move it
                         svg.selectAll(`circle[linkSet='${mainLink.linkSet}'][position='${mainLink.position}']`)
                             // .filter((p, i) => i === 1)
@@ -326,13 +326,13 @@ function intersectLinks2D(linkA) {
                     l.data[1].y = intersectionY;
                 })
 
-            // append intersection points
             if (svg.selectAll(`.intersection.${linkA.linkSet}`).size() === 0) {
+                // append intersection points
                 svg.append("circle")
                     // .data({linkA: linkA, linkB: linkB, cx: intersectionX, cy: intersectionY})
                     .attr("id", linkA.linkSet)
-                    .attr("cx", p => xScale(intersectionX))
-                    .attr("cy", p => yScale(intersectionY))
+                    .attr("cx", p => xScale(linkA.data[1].x))
+                    .attr("cy", p => yScale(linkA.data[1].y))
                     .attr("length", d)
                     .attr("r", 5)
                     .classed(linkA.linkSet, true)
@@ -350,6 +350,11 @@ function intersectLinks2D(linkA) {
                             d3.select(event.sourceEvent.target).classed("grabbing", false);
                         })
                     )
+            } else {
+                // move intersection point
+                svg.select(`.intersection.${linkA.linkSet}`)
+                    .attr("cx", p => xScale(intersectionX))
+                    .attr("cy", p => yScale(intersectionY))
             }
         }
     }
